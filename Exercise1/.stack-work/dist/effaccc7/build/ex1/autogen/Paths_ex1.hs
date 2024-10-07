@@ -47,7 +47,7 @@ getBinDir, getLibDir, getDynLibDir, getDataDir, getLibexecDir, getSysconfDir :: 
 
 bindir, libdir, dynlibdir, datadir, libexecdir, sysconfdir :: FilePath
 bindir     = "C:\\Users\\lucia\\Downloads\\3rdYear\\CSU34016_FunctionalProgramming\\.stack-work\\install\\feff23cc\\bin"
-libdir     = "C:\\Users\\lucia\\Downloads\\3rdYear\\CSU34016_FunctionalProgramming\\.stack-work\\install\\feff23cc\\lib\\x86_64-windows-ghc-9.6.6\\ex1-1.0.0.0-8KalmMJgEL37jEeTFR9Gbj-ex1"
+libdir     = "C:\\Users\\lucia\\Downloads\\3rdYear\\CSU34016_FunctionalProgramming\\.stack-work\\install\\feff23cc\\lib\\x86_64-windows-ghc-9.6.6\\ex1-1.0.0.0-5peGQSRZISxI4xywLYpFCm-ex1"
 dynlibdir  = "C:\\Users\\lucia\\Downloads\\3rdYear\\CSU34016_FunctionalProgramming\\.stack-work\\install\\feff23cc\\lib\\x86_64-windows-ghc-9.6.6"
 datadir    = "C:\\Users\\lucia\\Downloads\\3rdYear\\CSU34016_FunctionalProgramming\\.stack-work\\install\\feff23cc\\share\\x86_64-windows-ghc-9.6.6\\ex1-1.0.0.0"
 libexecdir = "C:\\Users\\lucia\\Downloads\\3rdYear\\CSU34016_FunctionalProgramming\\.stack-work\\install\\feff23cc\\libexec\\x86_64-windows-ghc-9.6.6\\ex1-1.0.0.0"
