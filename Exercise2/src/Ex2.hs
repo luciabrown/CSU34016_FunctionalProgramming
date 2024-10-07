@@ -17,21 +17,21 @@ mul x y
 -- *** Q1 (3 marks)
 -- returns a list of every 113th element of its input
 f1 :: [a] -> [a]
-f1 xs = undefined
+f1 xs = [x | (x, i) <- zip xs [1..], i `mod` 113 == 0]  --Pair with index, extract every 113 elements
 
 -- *** Q2 (3 marks)
 -- sums every 277th element of its input
 -- if list is too short it returns 0
 -- you can use `add` or `(+)` here - won't effect grading
 f2 :: [Int] -> Int
-f2 ns = undefined
+f2 ns = foldl add 0 [x | (x, i) <- zip ns [1..], i `mod` 277 == 0]
 
 -- *** Q3 (4 marks)
 -- multiplies every 316th element of its input
 -- if list is too short it returns 1
 -- you can use `mul` or `(*)` here - won't effect grading
 f3 :: [Int] -> Int
-f3 ns = undefined
+f3 ns = foldl mul 1 [x | (x, i) <- zip ns [1..], i `mod` 316 == 0]
 
 -- *** Q4 (8 marks)
 -- Operation Table (See Exercise2 description on BB)
