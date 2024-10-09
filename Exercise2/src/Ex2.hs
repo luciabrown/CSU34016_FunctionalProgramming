@@ -62,70 +62,74 @@ f3 ns = foldl mul 1 [x | (x, i) <- zip ns [1..], i `mod` 316 == 0]
 --   When building a list for test purposes,
 --   remember a value of type `Maybe a` needs to be built
 --   using one of the two data constructors of the `Maybe` type.
-f4 :: [Maybe Int] -> (Int,[Maybe Int])
-f4 mis = whichOpcode filter
+-- Operation Table
+-- Initially, skip any number that is not an opcode
+-- If called with [], return `(0,[])`
+-- If no numbers found after an `add` opcode, return (0,[])
+-- If no numbers found after an `mul` opcode, return (1,[])
+-- If list ends midway through opcode processing, return result so far
+-- If a Nothing is skipped for a fixed N opcode,
+-- that Nothing does not contribute to the count.
+-- Hint: A value of type `Maybe a` needs to be built using one of the two data constructors of the `Maybe` type.
+
+f4 :: [Maybe Int] -> (Int, [Maybe Int])
+f4 mis = whichOpcode mis
   where
-  filter = [x | Just x <- mis]      -- Remove Nothing values
-  whichOpcode :: [Int] -> (Int, [Maybe Int])
-  whichOpcode [] = (0, [])  -- If the list is empty, return (0, [])
-  whichOpcode (x:xs) = case x of
-    60 -> addHandler 3 xs Nothing  -- add fixed 3, terminate on Nothing
-    28 -> addHandler 3 xs (Just 0)  -- add fixed 3, skip on Nothing
-    49 -> addHandler 5 xs (Just 4)   -- add fixed 5, treat 4 as value
-    53 -> addHandler 3 xs Nothing     -- add fixed 3, terminate on Nothing
-    66 -> addHandler 4 xs (Just 0)    -- add fixed 4, skip on Nothing
-    18 -> addHandler 6 xs (Just 8)     -- add fixed 6, treat 8 as value
-    73 -> mulHandler 4 xs Nothing      -- mul fixed 4, terminate on Nothing
-    44 -> mulHandler 3 xs (Just 0)     -- mul fixed 3, skip on Nothing
-    50 -> mulHandler 3 xs (Just 6)     -- mul fixed 3, treat 6 as value
-    47 -> mulHandler 4 xs Nothing      -- mul fixed 4, terminate on Nothing
-    57 -> mulHandler 4 xs (Just 0)     -- mul fixed 4, skip on Nothing
-    76 -> mulHandler 5 xs (Just 7)     -- mul fixed 5, treat 7 as value
-    _  -> whichOpcode xs               -- Skip any unrecognized opcode
+    whichOpcode :: [Maybe Int] -> (Int, [Maybe Int])
+    whichOpcode [] = (0, []) -- If the list is empty, return (0, [])
+    whichOpcode (x:xs) = case x of
+      Just 60 -> addHandler 3 xs Nothing -- add fixed 3, terminate on Nothing
+      Just 28 -> addHandler 3 xs (Just 0) -- add fixed 3, skip on Nothing
+      Just 49 -> addHandler 5 xs (Just 4) -- add fixed 5, treat 4 as value
+      Just 53 -> addHandler 3 xs Nothing -- add fixed 3, terminate on Nothing
+      Just 66 -> addHandler 4 xs (Just 0) -- add fixed 4, skip on Nothing
+      Just 18 -> addHandler 6 xs (Just 8) -- add fixed 6, treat 8 as value
+      Just 73 -> mulHandler 4 xs Nothing -- mul fixed 4, terminate on Nothing
+      Just 44 -> mulHandler 3 xs (Just 0) -- mul fixed 3, skip on Nothing
+      Just 50 -> mulHandler 3 xs (Just 6) -- mul fixed 3, treat 6 as value
+      Just 47 -> mulHandler 4 xs Nothing -- mul fixed 4, terminate on Nothing
+      Just 57 -> mulHandler 4 xs (Just 0) -- mul fixed 4, skip on Nothing
+      Just 76 -> mulHandler 5 xs (Just 7) -- mul fixed 5, treat 7 as value
+      _ -> whichOpcode xs -- Skip any unrecognized opcode
 
-  -- Helper function for add opcode operations
-  -- n = how many operands, xs = list of operands, corruptHandler = 0
-  addHandler :: Int -> [Int] -> Maybe Int -> (Int, [Maybe Int])
-  addHandler n xs corruptHandler = operate add n xs corruptHandler 0
+    -- Helper function for add opcode operations
+    addHandler :: Int -> [Maybe Int] -> Maybe Int -> (Int, [Maybe Int])
+    addHandler n xs corruptHandler = operate (+) n xs corruptHandler 0
 
-  -- Helper function for handle mul opcode operations
-  -- n = how many operands, xs = list of operands, corruptHandler = 1
-  mulHandler :: Int -> [Int] -> Maybe Int -> (Int, [Maybe Int])
-  mulHandler n xs corruptHandler = operate mul n xs corruptHandler 1
+    -- Helper function for handle mul opcode operations
+    mulHandler :: Int -> [Maybe Int] -> Maybe Int -> (Int, [Maybe Int])
+    mulHandler n xs corruptHandler = operate (*) n xs corruptHandler 1
 
-  -- General operation handler for add and mul opcodes
-  -- op = add OR mul, n = how many operands, xs = list of operands, corruptHandler(0 OR 1)
-  operate :: (Int -> Int -> Int) -> Int -> [Int] -> Maybe Int -> Int -> (Int, [Maybe Int])
-  operate op n xs corruptHandler initVal = processVals n xs corruptHandler op initVal [] 
+    -- General operation handler for add and mul opcodes
+    operate :: (Int -> Int -> Int) -> Int -> [Maybe Int] -> Maybe Int -> Int -> (Int, [Maybe Int])
+    operate op n xs corruptHandler initVal = processVals n xs corruptHandler op initVal []
 
-  -- Function to check if a value is corrupted (i.e., Nothing)
-  isCorrupted :: Maybe Int -> Bool
-  isCorrupted Nothing = True
-  isCorrupted _       = False
+    -- Function to check if a value is corrupted (i.e., Nothing)
+    isCorrupted :: Maybe Int -> Bool
+    isCorrupted Nothing = True
+    isCorrupted _ = False
 
-  -- Function to process values based on the fault-tolerant behavior
-  processVals :: Int -> [Int] -> Maybe Int -> (Int -> Int -> Int) -> Int -> [Int] -> (Int, [Maybe Int])
+    -- Function to process values based on the fault-tolerant behavior
+    processVals :: Int -> [Maybe Int] -> Maybe Int -> (Int -> Int -> Int) -> Int -> [Int] -> (Int, [Maybe Int])
+    
+    -- Return result after processing fixed N values
+    processVals 0 remainingVals _ _ currentResult processedVals = (currentResult, map Just processedVals ++ remainingVals)
 
-  -- Return result after processing fixed N values
-  processVals 0 remainingVals _ _ currentResult processedVals = (currentResult, map Just processedVals ++ map Just remainingVals) 
+    -- Return result if list ends
+    processVals _ [] _ _ currentResult processedVals = (currentResult, map Just processedVals)
 
-  -- Return result if list ends
-  processVals _ [] _ _ currentResult processedVals = (currentResult, map Just processedVals)  					
-  
-  processVals otherVals (currentValue:remainingVals) corruptHandler op currentResult processedVals  =
-    case corruptHandler of
+    processVals n (currentValue:remainingVals) corruptHandler op currentResult processedVals =
+      case corruptHandler of
+        -- If value is corrupted & handler = Nothing -> terminate
+        Nothing -> case currentValue of
+          Nothing -> (currentResult, map Just processedVals ++ remainingVals)
+          Just val -> processVals (n-1) remainingVals corruptHandler op (op currentResult val) (processedVals ++ [val])
+          
+        -- If value is corrupted & handler = Just -> replace value with Just value
+        Just val -> case currentValue of
+          Nothing -> processVals (n-1) remainingVals corruptHandler op (op currentResult val) (processedVals ++ [val])
+          Just currVal -> processVals (n-1) remainingVals corruptHandler op (op currentResult currVal) (processedVals ++ [currVal])
 
-      -- If value is corrupted & handler = Nothing -> terminate
-      Nothing -> if isCorrupted (Just currentValue)  									
-        then (currentResult, map Just processedVals ++ map Just remainingVals)
-        -- Else combine value with the result	
-        else processVals (otherVals-1) remainingVals corruptHandler (currentResult op currentValue) (processedVals ++ [currentValue])
-
-      -- If value is corrupted & handler = Just -> replace value with Just value
-      Just val -> if isCorrupted (Just currentValue)  									
-        then processVals (otherVals-1) remainingVals corruptHandler (currentResult  op val) (processedVals ++ [val])
-        -- Else combine value with the result	
-        else processVals (otherVals-1) remainingVals corruptHandler (currentResult op currentValue) (processedVals ++ [currentValue])
 
 
 -- *** Q5 (2 marks)
@@ -150,9 +154,9 @@ testF2_2 = f2 [1..600] == add 277 554             -- Sum of 277th and 554th elem
 testF2_3 = f2 [1..276] == 0                       -- The list is too short to include a 277th element
 
 -- *** Test cases for f3 function
-testF3_1 = f3 [1..500] == 1                       -- No element at the 316th position, so return 1
-testF3_2 = f3 [1..632] == 316                     -- Product of only the 316th element
-testF3_3 = f3 [1..948] == mul 316 632             -- Product of 316th and 632nd element
+testF3_1 = f3 [1..200] == 1                       -- No element at the 316th position, so return 1
+testF3_2 = f3 [1..500] == 316                     -- Product of only the 316th element
+testF3_3 = f3 [1..900] == mul 316 632             -- Product of 316th and 632nd element
 
 -- *** Test cases for f4 function
 testF4_1 = f4 [Just 60, Just 3, Just 4, Just 5, Nothing] == (0, [Just 3, Just 4, Just 5])
@@ -167,6 +171,8 @@ testF4_9 = f4 [Just 50, Just 6, Just 3, Just 4, Just 5] == (36, [Just 3, Just 4,
 testF4_10 = f4 [Just 47, Just 1, Just 2, Nothing, Just 4, Just 5] == (0, [Just 1, Just 2, Nothing])
 testF4_11 = f4 [Just 57, Just 2, Nothing, Just 4, Just 5] == (6, [Just 2, Nothing])
 testF4_12 = f4 [Just 76, Just 1, Just 2, Just 3, Just 4, Just 5, Just 6, Just 7] == (42, [Just 6, Just 7])
+
+-- everything below this line is working
 testF4_13 = f4 [] == (0, [])                            -- Edge case: Empty input list
 testF4_14 = f4 [Nothing, Nothing, Nothing] == (0, [])   -- Edge case: All Nothing values
 testF4_15 = f4 [Just 73] == (1, [])                     -- Edge case: Opcode with no operands
