@@ -73,62 +73,55 @@ f3 ns = foldl mul 1 [x | (x, i) <- zip ns [1..], i `mod` 316 == 0]
 -- Hint: A value of type `Maybe a` needs to be built using one of the two data constructors of the `Maybe` type.
 
 f4 :: [Maybe Int] -> (Int, [Maybe Int])
-f4 mis = whichOpcode mis
-  where
-    whichOpcode :: [Maybe Int] -> (Int, [Maybe Int])
-    whichOpcode [] = (0, []) -- If the list is empty, return (0, [])
-    whichOpcode (x:xs) = case x of
-      Just 60 -> addHandler 3 xs Nothing -- add fixed 3, terminate on Nothing
-      Just 28 -> addHandler 3 xs (Just 0) -- add fixed 3, skip on Nothing
-      Just 49 -> addHandler 5 xs (Just 4) -- add fixed 5, treat 4 as value
-      Just 53 -> addHandler 3 xs Nothing -- add fixed 3, terminate on Nothing
-      Just 66 -> addHandler 4 xs (Just 0) -- add fixed 4, skip on Nothing
-      Just 18 -> addHandler 6 xs (Just 8) -- add fixed 6, treat 8 as value
-      Just 73 -> mulHandler 4 xs Nothing -- mul fixed 4, terminate on Nothing
-      Just 44 -> mulHandler 3 xs (Just 0) -- mul fixed 3, skip on Nothing
-      Just 50 -> mulHandler 3 xs (Just 6) -- mul fixed 3, treat 6 as value
-      Just 47 -> mulHandler 4 xs Nothing -- mul fixed 4, terminate on Nothing
-      Just 57 -> mulHandler 4 xs (Just 0) -- mul fixed 4, skip on Nothing
-      Just 76 -> mulHandler 5 xs (Just 7) -- mul fixed 5, treat 7 as value
-      _ -> whichOpcode xs -- Skip any unrecognized opcode
+f4 mis = functionFour mis 0  -- Initialize 'ans' to 0 for addition
 
-    -- Helper function for add opcode operations
-    addHandler :: Int -> [Maybe Int] -> Maybe Int -> (Int, [Maybe Int])
-    addHandler n xs corruptHandler = operate (+) n xs corruptHandler 0
+functionFour :: [Maybe Int] -> Int -> (Int, [Maybe Int])
+functionFour [] ans = (ans, [])
+functionFour (Just opcode : operands) ans =
+  case opcode of
+    60 -> fixed operands 3 ans add                    -- add fixed 3, terminate on Nothing
+    28 -> fixed operands 3 ans add                    -- add fixed 3, skip on Nothing
+    49 -> fixed operands 5 ans (addHandler 4)         -- add fixed 5, treat 4 as value
+    53 -> stopping operands 3 ans                     -- add  3, terminate on Nothing
+    66 -> stopping operands 4 ans                     -- add  4, skip on Nothing
+    18 -> stopping operands 6 ans (addHandler 8)      -- add  6, treat 8 as value
+    73 -> fixed operands 4 ans                        -- mul fixed 4, terminate on Nothing
+    44 -> fixed operands 3 ans                        -- mul fixed 3, skip on Nothing
+    50 -> fixed operands 3 ans (mulHandler 6)         -- mul fixed 3, treat 6 as value
+    47 -> stopping operands 4 ans                     -- mul  4, terminate on Nothing
+    57 -> stopping operands 4 ans                     -- mul  4, skip on Nothing
+    76 -> stopping operands 5 ans (mulHandler 7)      -- mul  5, treat 7 as value
+    _  -> functionFour operands ans                   -- Skip any unrecognized opcode
+functionFour (Nothing : operands) ans = functionFour operands ans
 
-    -- Helper function for handle mul opcode operations
-    mulHandler :: Int -> [Maybe Int] -> Maybe Int -> (Int, [Maybe Int])
-    mulHandler n xs corruptHandler = operate (*) n xs corruptHandler 1
+fixed :: [Maybe Int] -> Int -> Int -> (Int -> Int -> Int) -> (Int, [Maybe Int])
+fixed fixedOperands count ans operation
+    | length fixedOperands >= count =
+      let (current, remaining) = splitAt count fixedOperands
+          processed = foldl (\acc x -> maybe 0 id x) 1 current  
+          newResult = operation ans processed
+      in functionFour remaining newResult
+    | otherwise = (ans, fixedOperands)
 
-    -- General operation handler for add and mul opcodes
-    operate :: (Int -> Int -> Int) -> Int -> [Maybe Int] -> Maybe Int -> Int -> (Int, [Maybe Int])
-    operate op n xs corruptHandler initVal = processVals n xs corruptHandler op initVal []
+stopping :: [Maybe Int] -> Int -> Int -> (Int -> Int -> Int) -> (Int, [Maybe Int])
+stopping stoppingOperands stoppingNumber ans operation
+    | length stoppingOperands >= stoppingNumber =
+      let (current, remaining) = splitAt stoppingNumber stoppingOperands
+          processed = foldl (\acc x -> maybe 0 id x) 1 current  
+          newResult = operation ans processed
+      in (newResult, remaining)
+    | otherwise = (ans, stoppingOperands)    
 
-    -- Function to check if a value is corrupted (i.e., Nothing)
-    isCorrupted :: Maybe Int -> Bool
-    isCorrupted Nothing = True
-    isCorrupted _ = False
+addHandler :: Int -> Int -> Int -> Int
+addHandler result operand replacement
+    | operand == 4 = replacement
+    | otherwise = result + operand
 
-    -- Function to process values based on the fault-tolerant behavior
-    processVals :: Int -> [Maybe Int] -> Maybe Int -> (Int -> Int -> Int) -> Int -> [Int] -> (Int, [Maybe Int])
-    
-    -- Return result after processing fixed N values
-    processVals 0 remainingVals _ _ currentResult processedVals = (currentResult, map Just processedVals ++ remainingVals)
+mulHandler :: Int -> Int -> Int -> Int
+mulHandler result operand replacement
+    | operand == 6 = replacement
+    | otherwise = result * operand
 
-    -- Return result if list ends
-    processVals _ [] _ _ currentResult processedVals = (currentResult, map Just processedVals)
-
-    processVals n (currentValue:remainingVals) corruptHandler op currentResult processedVals =
-      case corruptHandler of
-        -- If value is corrupted & handler = Nothing -> terminate
-        Nothing -> case currentValue of
-          Nothing -> (currentResult, map Just processedVals ++ remainingVals)
-          Just val -> processVals (n-1) remainingVals corruptHandler op (op currentResult val) (processedVals ++ [val])
-          
-        -- If value is corrupted & handler = Just -> replace value with Just value
-        Just val -> case currentValue of
-          Nothing -> processVals (n-1) remainingVals corruptHandler op (op currentResult val) (processedVals ++ [val])
-          Just currVal -> processVals (n-1) remainingVals corruptHandler op (op currentResult currVal) (processedVals ++ [currVal])
 
 
 
