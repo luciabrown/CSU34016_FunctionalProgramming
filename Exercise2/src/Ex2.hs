@@ -50,103 +50,102 @@ f3 ns = foldl mul 1 [x | (x, i) <- zip ns [1..], i `mod` 316 == 0]
 --    |   47   |    mul    | stop@ 4  | term    |
 --    |   57   |    mul    | stop@ 4  | skip    |
 --    |   76   |    mul    | stop@ 5  | 7       |
---    -------------------------------------------
--- initially, skip any number that is not an opcode
--- if called with [], return `(0,[])`
--- if no numbers found after an `add` opcode, return (0,[])
--- if no numbers found after an `mul` opcode, return (1,[])
--- if list ends midway through opcode processing, return result so far
--- if a Nothing is skipped for a fixed N opcode,
---    that Nothing does not contribute to the count.
--- Hint:
---   When building a list for test purposes,
---   remember a value of type `Maybe a` needs to be built
---   using one of the two data constructors of the `Maybe` type.
--- Operation Table
--- Initially, skip any number that is not an opcode
--- If called with [], return `(0,[])`
--- If no numbers found after an `add` opcode, return (0,[])
--- If no numbers found after an `mul` opcode, return (1,[])
--- If list ends midway through opcode processing, return result so far
--- If a Nothing is skipped for a fixed N opcode,
--- that Nothing does not contribute to the count.
--- Hint: A value of type `Maybe a` needs to be built using one of the two data constructors of the `Maybe` type.
+  --    -------------------------------------------
+  -- initially, skip any number that is not an opcode
+  -- if called with [], return `(0,[])`
+  -- if no numbers found after an `add` opcode, return (0,[])
+  -- if no numbers found after an `mul` opcode, return (1,[])
+  -- if list ends midway through opcode processing, return result so far
+  -- if a Nothing is skipped for a fixed N opcode,
+  --    that Nothing does not contribute to the count.
+  -- Hint:
+  --   When building a list for test purposes,
+  --   remember a value of type `Maybe a` needs to be built
+  --   using one of the two data constructors of the `Maybe` type.
+  -- Operation Table
+  -- Initially, skip any number that is not an opcode
+  -- If called with [], return `(0,[])`
+  -- If no numbers found after an `add` opcode, return (0,[])
+  -- If no numbers found after an `mul` opcode, return (1,[])
+  -- If list ends midway through opcode processing, return result so far
+  -- If a Nothing is skipped for a fixed N opcode,
+  -- that Nothing does not contribute to the count.
+  -- Hint: A value of type `Maybe a` needs to be built using one of the two data constructors of the `Maybe` type.
 
 f4 :: [Maybe Int] -> (Int, [Maybe Int])
 f4 mis = functionFour mis 0  -- Initialize 'ans' to 0
 
+-- Helper function that processes the list
 functionFour :: [Maybe Int] -> Int -> (Int, [Maybe Int])
-functionFour [] ans = (ans, [])
+functionFour [] ans = (ans, [])  -- Base case: empty list
 functionFour (Just opcode : operands) ans =
   case opcode of
-    60 -> fixed operands 3 ans True add True                    -- add fixed 3, terminate on Nothing
-    28 -> fixed operands 3 ans True add False                  -- add fixed 3, skip on Nothing
-    49 -> fixed operands 5 ans True(addHandler 4)         -- add fixed 5, treat 4 as value
-    53 -> stopping operands 3 ans True add True                    -- add  3, terminate on Nothing
-    66 -> stopping operands 4 ans True add False                   -- add  4, skip on Nothing
-    18 -> stopping operands 6 ans True (addHandler 8)      -- add  6, treat 8 as value
-    73 -> fixed operands 4 ans False mul True                     -- mul fixed 4, terminate on Nothing
-    44 -> fixed operands 3 ans False mul False                      -- mul fixed 3, skip on Nothing
-    50 -> fixed operands 3 ans False (mulHandler 6)         -- mul fixed 3, treat 6 as value
-    47 -> stopping operands 4 ans False mul True                    -- mul  4, terminate on Nothing
-    57 -> stopping operands 4 ans False mul False                  -- mul  4, skip on Nothing
-    76 -> stopping operands 5 ans False (mulHandler 7)      -- mul  5, treat 7 as value
-    _  -> functionFour operands ans                   -- Skip any unrecognized opcode
-functionFour (Nothing : operands) ans = functionFour operands ans
+    60 -> fixed operands 3 ans True add 1                    -- add fixed 3, terminate on Nothing
+    28 -> fixed operands 3 ans True add 0                    -- add fixed 3, skip on Nothing
+    49 -> fixed operands 5 ans True add 4             -- add fixed 5, treat 4 as value
+    53 -> stopping operands 3 ans True add 1                 -- add  3, terminate on Nothing
+    66 -> stopping operands 4 ans True add 0                 -- add  4, skip on Nothing
+    18 -> stopping operands 6 ans True add 8          -- add  6, treat 8 as value
+    73 -> fixed operands 4 ans False mul 1                   -- mul fixed 4, terminate on Nothing
+    44 -> fixed operands 3 ans False mul 0                   -- mul fixed 3, skip on Nothing
+    50 -> fixed operands 3 ans False mul 6            -- mul fixed 3, treat 6 as value
+    47 -> stopping operands 4 ans False mul 1                -- mul  4, terminate on Nothing
+    57 -> stopping operands 4 ans False mul 0                -- mul  4, skip on Nothing
+    76 -> stopping operands 5 ans False mul 7         -- mul  5, treat 7 as value
+    _  -> functionFour operands ans                          -- Skip any unrecognized opcode
+functionFour (Nothing : operands) ans = functionFour operands ans  -- Skip Nothing at the beginning of the list
 
-fixed :: [Maybe Int] -> Int -> Int -> Bool -> (Int -> Int -> Int) -> Bool -> (Int, [Maybe Int])
-fixed fixedOperands count ans isAdd operation isTerm
+-- Handling fixed operand operations (with term, skip, or replace)
+fixed :: [Maybe Int] -> Int -> Int -> Bool -> (Int -> Int -> Int) -> Int -> (Int, [Maybe Int])
+fixed fixedOperands count ans isAdd operation replacement
     | length fixedOperands >= count =
       let (current, remaining) = splitAt count fixedOperands
           accumulator = if isAdd then 0 else 1
-          -- Process each operand with respect to the Nothing handling behavior
-          processed = foldl (\acc x -> 
-                              case x of 
-                                Nothing -> if isTerm 
-                                           then acc   -- Terminate early by returning current accumulator
-                                           else acc   -- Skip the Nothing value
-                                Just v  -> if isAdd then add acc v else mul acc v
-                            ) accumulator current
-          newResult = operation ans processed
-      in (newResult, remaining)
-    | otherwise = -- If not enough operands, process what we have
-      let total = foldl (\acc x -> 
-                          case x of 
-                            Nothing -> if isTerm 
-                                       then acc   -- Terminate 
-                                       else acc   -- Skip the Nothing value
-                            Just v  -> add acc v
-                        ) ans fixedOperands
-      in (total, []) -- Return the sum of what we can process, no remaining operands
+          (processed, terminatedEarly) = foldl (\(acc, stop) x -> 
+                                                  if stop 
+                                                    then (acc, stop)  -- Already terminated
+                                                    else case x of 
+                                                      Nothing -> (acc, True)  -- Terminate on Nothing
+                                                      Just v  -> (operation acc v, False)  -- Continue processing
+                                               ) (if isAdd then 0 else 1, False) current
+          newResult = if isAdd then add ans processed else mul ans processed
+      in if terminatedEarly
+         then (newResult, [])  -- No more operands processed after termination
+         else (newResult, remaining)  -- Continue if no termination
+    | otherwise =
+      -- When there are fewer than 'count' operands, process what we have
+      let (total, _) = foldl (\(acc, stop) x -> 
+                                if stop 
+                                  then (acc, stop)  -- Already terminated
+                                  else case x of 
+                                    Nothing -> (acc, True)  -- Terminate on Nothing
+                                    Just v  -> (operation acc v, False)  -- Continue processing
+                             ) (ans, False) fixedOperands
+      in (total, [])  -- No remaining operands to process
 
 
-
-stopping :: [Maybe Int] -> Int -> Int ->  Bool ->(Int -> Int -> Int) -> Bool -> (Int, [Maybe Int])
-stopping stoppingOperands stoppingNumber ans isAdd operation isTerm
+-- Handling stopping operand operations (with term, skip, or replace)
+stopping :: [Maybe Int] -> Int -> Int -> Bool -> (Int -> Int -> Int) -> Int -> (Int, [Maybe Int])
+stopping stoppingOperands stoppingNumber ans isAdd operation replacement
     | length stoppingOperands >= stoppingNumber =
       let (current, remaining) = splitAt stoppingNumber stoppingOperands
           accumulator = if isAdd then 0 else 1
-          -- Process each operand with respect to the Nothing handling behavior
-          processed = foldl (\acc x -> 
-                              case x of 
-                                Nothing -> if terminateOnNothing 
-                                           then acc   -- Terminate
-                                           else acc   -- Skip the Nothing value
-                                Just v  -> if isAdd then add acc v else mul acc v
-                            ) accumulator current
-          newResult = operation ans processed
-      in (newResult, remaining)
-    | otherwise = (ans, stoppingOperands) -- If not enough operands, return what we can   
+          -- Process the operands with termination logic
+          (processed, terminatedEarly) = foldl (\(acc, stop) x -> 
+                                                  if stop 
+                                                      then (acc, stop)  -- Already terminated
+                                                      else case x of 
+                                                          Nothing -> (operation acc replacement, True)  -- Terminate on Nothing
+                                                          Just v  -> (operation acc v, False)  -- Continue processing
+                                                ) (accumulator, False) current
+          newResult = if isAdd then add ans processed else mul ans processed
+      in if terminatedEarly
+            then (newResult, remaining)  -- Return the result and remaining operands if terminated
+            else (newResult, [])  -- If not terminated, no remaining operands
+    | otherwise = 
+      (ans, stoppingOperands)  -- Return the current answer and unprocessed operands
 
-addHandler :: Int -> Int -> Int -> Int
-addHandler result operand replacement
-    | operand == 4 = replacement
-    | otherwise = result + operand
 
-mulHandler :: Int -> Int -> Int -> Int
-mulHandler result operand replacement
-    | operand == 6 = replacement
-    | otherwise = result * operand
 
 -- *** Q5 (2 marks)
 -- uses `f4` to process all the opcodes in the maybe list,
@@ -175,72 +174,62 @@ testF3_2 = f3 [1..500] == 316                     -- Product of only the 316th e
 testF3_3 = f3 [1..900] == mul 316 632             -- Product of 316th and 632nd element
 
 -- *** Test cases for f4 function
+-- ADD FIXED TERM 3 - NOTHINGS TERMINATED
 testF4_60a = f4 [Just 60, Just 3,  Just 4, Just 5] == (12, [])                  -- 3 + 4 + 5 = 12, []
 testF4_60b = f4 [Just 60, Just 3,  Just 4, Just 5, Just 6] == (12, [Just 6])    -- 3 + 4 + 5 + 6 = 12, [Just 6]
 testF4_60c = f4 [Just 60, Just 3,  Just 4] == (7, [])                           -- 3 + 4 = 7, []
 testF4_60d = f4 [Just 60, Just 3,  Just 4, Nothing] == (7, [])                                         -- 3 + 4 = 7, []
-testF4_60e = f4 [Just 60, Just 3,  Nothing, Just 4, Just 5] == (3, [Just 4, Just 5])                   -- 3 + 4 = 7, []
+testF4_60e = f4 [Just 60, Just 3,  Nothing, Just 4, Just 5] == (3, [Just 4, Just 5])                  
 
-testF4_28a = f4 [Just 28, Just 3, Just 4, Just 5] = (12,[])
-testF4_28b = f4 [Just 28, Just 3, Just 4, Just 5, Just 6] == (12, [Just 6])
-testF4_28c = f4 [Just 28, Just 3, Just 4] == (7, [])
-testF4_28d = f4 [Just 28, Just 3, Just 4, Nothing, Just 5]== (12, [])
-testF4_28e = f4 [Just 28, Just 3, Nothing, Just 4, Just 5, Just 6] == (12, [Just 6])
+-- ADD FIXED TERM 3 - NOTHINGS SKIPPED
+testF4_28a = f4 [Just 28, Just 3, Just 4, Nothing, Just 5]== (12, [])
+testF4_28b = f4 [Just 28, Just 3, Nothing, Just 4, Just 5, Just 6] == (12, [Just 6])
 
+-- ADD FIXED TERM 5 - NOTHINGS REPLACED BY 
 testF4_49a = f4 [Just 49, Just 2, Just 3, Just 4, Just 5, Just 6] == (20, [])
 testF4_49b = f4 [Just 49, Just 2, Just 3, Just 4] == (10, [])
 testF4_49c = f4 [Just 49, Just 2, Just 3, Just 4, Just 5, Just 6,Just 7 ]== (20, [Just 7])
 testF4_49d = f4 [Just 49, Nothing, Just 3, Just 4, Just 5, Just 6] == (22, [])
 testF4_49e = f4 [Just 49, Nothing, Nothing, Just 4, Just 5, Just 6] == (23, [])
 
-testF4_53a = f4 [Just 53, Just 4, Just 5, Nothing, Just 6] == (12, [Just 4, Just 5, Nothing])
-testF4_53b = f4 [Just 53]
-testF4_53c = f4 [Just 53]
-testF4_53d = f4 [Just 53]
-testF4_53e = f4 [Just 53]
+-- ADD STOP ON 3 - NOTHINGS TERMINATED
+testF4_53a = f4 [Just 53, Just 4, Just 5, Nothing, Just 6, Just 3, Just 2] == (9, [Just 6, Just 3, Just 2])
+testF4_53b = f4 [Just 53, Just 4, Just 3] == (7, [])
 
-testF4_66a = f4 [Just 66, Just 1, Just 2, Nothing, Just 3] == (9, [Just 1, Just 2, Nothing, Just 3])
-testF4_66b = f4 [Just 66]
-testF4_66c = f4 [Just 66]
-testF4_66d = f4 [Just 66]
-testF4_66e = f4 [Just 66]
+-- ADD STOP ON 4 - NOTHINGS SKIPPED
+testF4_66a = f4 [Just 66, Just 1, Just 2, Nothing, Just 3, Just 5, Just 4] == (15, [])
 
+-- ADD STOP ON 6 - NOTHINGS REPLACED BY
 testF4_18a = f4 [Just 18, Just 1, Just 2, Just 3, Just 4, Just 5, Just 6, Just 7, Just 8] == (20, [Just 8])
 testF4_18b = f4 [Just 18]
 testF4_18c = f4 [Just 18]
 testF4_18d = f4 [Just 18]
 testF4_18e = f4 [Just 18]
 
-testF4_73a = f4 [Just 73, Just 1, Just 2, Just 3, Just 4, Nothing, Just 5] == (0, [Just 1, Just 2, Just 3, Just 4])
+-- MUL FIXED TERM 4 - NOTHINGS TERMINATED
+testF4_73a = f4 [Just 73, Just 1, Just 2, Just 3, Just 4, Just 5] == (24, [Just 5])
 testF4_73b = f4 [Just 73]
 testF4_73c = f4 [Just 73]
 testF4_73d = f4 [Just 73]
 testF4_73e = f4 [Just 73]
 
-testF4_44a = f4 [Just 44, Just 6, Just 7, Nothing, Just 3] == (42, [Just 6, Just 7, Nothing, Just 3])
-testF4_44b = f4 [Just 44]
-testF4_44c = f4 [Just 44]
-testF4_44d = f4 [Just 44]
-testF4_44e = f4 [Just 44]
+-- MUL FIXED TERM 4 - NOTHINGS SKIPPED
+testF4_44a = f4 [Just 44, Just 6, Just 7, Nothing, Just 3] == (126, [Just 3])
 
+-- MUL FIXED TERM 3 - NOTHINGS REPLACED BY 
 testF4_50a = f4 [Just 50, Just 6, Just 3, Just 4, Just 5] == (36, [Just 3, Just 4, Just 5])
 testF4_50b = f4 [Just 50]
 testF4_50c = f4 [Just 50]
 testF4_50d = f4 [Just 50]
 testF4_50e = f4 [Just 50]
 
-testF4_47a = f4 [Just 47, Just 1, Just 2, Nothing, Just 4, Just 5] == (0, [Just 1, Just 2, Nothing])
-testF4_47b = f4 [Just 47]
-testF4_47c = f4 [Just 47]
-testF4_47d = f4 [Just 47]
-testF4_47e = f4 [Just 47]
+-- MUL STOP ON 3 - NOTHINGS TERMINATED
+testF4_47a = f4 [Just 47, Just 1, Just 2, Nothing, Just 4, Just 5, Just 2, Just 3] == (2, [Just 4, Just 5, Just 2, Just 3])
 
-testF4_57a = f4 [Just 57, Just 2, Nothing, Just 4, Just 5] == (6, [Just 2, Nothing])
-testF4_57b = f4 [Just 57]
-testF4_57c = f4 [Just 57]
-testF4_57d = f4 [Just 57]
-testF4_57e = f4 [Just 57]
+-- MUL STOP ON 4 - NOTHINGS SKIPPED
+testF4_57a = f4 [Just 57, Just 2, Nothing, Just 4, Just 5] == (8, [Just 5])
 
+-- MUL STOP ON 5 - NOTHINGS REPLACED BY 
 testF4_76a = f4 [Just 76, Just 1, Just 2, Just 3, Just 4, Just 5, Just 6, Just 7] == (42, [Just 6, Just 7])
 testF4_76b = f4 [Just 76]
 testF4_76c = f4 [Just 76]
