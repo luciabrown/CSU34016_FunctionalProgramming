@@ -98,17 +98,19 @@ fixed :: [Maybe Int] -> Int -> Int -> Bool -> (Int -> Int -> Int) -> (Int, [Mayb
 fixed fixedOperands count ans isAdd operation
     | length fixedOperands >= count =
       let (current, remaining) = splitAt count fixedOperands
-
           accumulator = if isAdd then 0 else 1
-          -- Adjust fold logic based on the operation (add or mul)
           processed = foldl (\acc x -> 
                               case x of 
                                 Nothing -> acc
                                 Just v  -> if isAdd then add acc v else mul acc v
                             ) accumulator current
           newResult = operation ans processed
-      in functionFour remaining newResult
-    | otherwise = (ans, fixedOperands)
+      in (newResult, remaining)
+    | otherwise =
+      let total = foldl (\acc x -> case x of Nothing -> acc; Just v -> add acc v) ans fixedOperands
+      in (total, []) -- Return the sum of what we can process, no remaining operands
+
+
 
 stopping :: [Maybe Int] -> Int -> Int ->  Bool ->(Int -> Int -> Int) -> (Int, [Maybe Int])
 stopping stoppingOperands stoppingNumber ans isAdd operation
@@ -166,19 +168,79 @@ testF3_2 = f3 [1..500] == 316                     -- Product of only the 316th e
 testF3_3 = f3 [1..900] == mul 316 632             -- Product of 316th and 632nd element
 
 -- *** Test cases for f4 function
-testF4_1 = f4 [Just 60, Just 3,  Just 4, Just 5] == (12, [])
+testF4_60a = f4 [Just 60, Just 3,  Just 4, Just 5] == (12, [])                  -- 3 + 4 + 5 = 12, []
+testF4_60b = f4 [Just 60, Just 3,  Just 4, Just 5, Just 6] == (12, [Just 6])    -- 3 + 4 + 5 + 6 = 12, [Just 6]
+testF4_60c = f4 [Just 60, Just 3,  Just 4] == (7, [])                           -- 3 + 4 = 7, []
+testF4_60d = f4 [Just 60, Just 3,  Just 4, Nothing] == (7, [])                                         -- 3 + 4 = 7, []
+testF4_60e = f4 [Just 60, Just 3,  Nothing, Just 4, Just 5] == (3, [Just 4, Just 5])                   -- 3 + 4 = 7, []
 
-testF4_2 = f4 [Just 28, Just 4, Just 5, Nothing, Just 6] == (12, [Just 4, Just 5, Just 6])
-testF4_3 = f4 [Just 49, Just 4, Just 5, Just 6, Just 7, Just 8] == (18, [Just 4, Just 5, Just 6, Just 7, Just 8])
-testF4_4 = f4 [Just 53, Just 4, Just 5, Nothing, Just 6] == (12, [Just 4, Just 5, Nothing])
-testF4_5 = f4 [Just 66, Just 1, Just 2, Nothing, Just 3] == (9, [Just 1, Just 2, Nothing, Just 3])
-testF4_6 = f4 [Just 18, Just 1, Just 2, Just 3, Just 4, Just 5, Just 6, Just 7, Just 8] == (20, [Just 8])
-testF4_7 = f4 [Just 73, Just 1, Just 2, Just 3, Just 4, Nothing, Just 5] == (0, [Just 1, Just 2, Just 3, Just 4])
-testF4_8 = f4 [Just 44, Just 6, Just 7, Nothing, Just 3] == (42, [Just 6, Just 7, Nothing, Just 3])
-testF4_9 = f4 [Just 50, Just 6, Just 3, Just 4, Just 5] == (36, [Just 3, Just 4, Just 5])
-testF4_10 = f4 [Just 47, Just 1, Just 2, Nothing, Just 4, Just 5] == (0, [Just 1, Just 2, Nothing])
-testF4_11 = f4 [Just 57, Just 2, Nothing, Just 4, Just 5] == (6, [Just 2, Nothing])
-testF4_12 = f4 [Just 76, Just 1, Just 2, Just 3, Just 4, Just 5, Just 6, Just 7] == (42, [Just 6, Just 7])
-testF4_13 = f4 [] == (0, [])                            -- Edge case: Empty input list
-testF4_14 = f4 [Nothing, Nothing, Nothing] == (0, [])   -- Edge case: All Nothing values
-testF4_15 = f4 [Just 73] == (1, [])                     -- Edge case: Opcode with no operands
+testF4_28a = f4 [Just 28, Just 3, Just 4, Just 5] = (12,[])
+testF4_28b = f4 [Just 28, Just 3, Just 4, Just 5, Just 6] == (12, [Just 6])
+testF4_28c = f4 [Just 28, Just 3, Just 4] == (7, [])
+testF4_28d = f4 [Just 28, Just 3, Just 4, Nothing, Just 5]== (12, [])
+testF4_28e = f4 [Just 28, Just 3, Nothing, Just 4, Just 5, Just 6] == (12, [Just 6])
+
+testF4_49a = f4 [Just 49, Just 2, Just 3, Just 4, Just 5, Just 6] == (20, [])
+testF4_49b = f4 [Just 49, Just 2, Just 3, Just 4] == (10, [])
+testF4_49c = f4 [Just 49, Just 2, Just 3, Just 4, Just 5, Just 6,Just 7 ]== (20, [Just 7])
+testF4_49d = f4 [Just 49, Nothing, Just 3, Just 4, Just 5, Just 6] == (22, [])
+testF4_49e = f4 [Just 49, Nothing, Nothing, Just 4, Just 5, Just 6] == (23, [])
+
+testF4_53a = f4 [Just 53, Just 4, Just 5, Nothing, Just 6] == (12, [Just 4, Just 5, Nothing])
+testF4_53b = f4 [Just 53]
+testF4_53c = f4 [Just 53]
+testF4_53d = f4 [Just 53]
+testF4_53e = f4 [Just 53]
+
+testF4_66a = f4 [Just 66, Just 1, Just 2, Nothing, Just 3] == (9, [Just 1, Just 2, Nothing, Just 3])
+testF4_66b = f4 [Just 66]
+testF4_66c = f4 [Just 66]
+testF4_66d = f4 [Just 66]
+testF4_66e = f4 [Just 66]
+
+testF4_18a = f4 [Just 18, Just 1, Just 2, Just 3, Just 4, Just 5, Just 6, Just 7, Just 8] == (20, [Just 8])
+testF4_18b = f4 [Just 18]
+testF4_18c = f4 [Just 18]
+testF4_18d = f4 [Just 18]
+testF4_18e = f4 [Just 18]
+
+testF4_73a = f4 [Just 73, Just 1, Just 2, Just 3, Just 4, Nothing, Just 5] == (0, [Just 1, Just 2, Just 3, Just 4])
+testF4_73b = f4 [Just 73]
+testF4_73c = f4 [Just 73]
+testF4_73d = f4 [Just 73]
+testF4_73e = f4 [Just 73]
+
+testF4_44a = f4 [Just 44, Just 6, Just 7, Nothing, Just 3] == (42, [Just 6, Just 7, Nothing, Just 3])
+testF4_44b = f4 [Just 44]
+testF4_44c = f4 [Just 44]
+testF4_44d = f4 [Just 44]
+testF4_44e = f4 [Just 44]
+
+testF4_50a = f4 [Just 50, Just 6, Just 3, Just 4, Just 5] == (36, [Just 3, Just 4, Just 5])
+testF4_50b = f4 [Just 50]
+testF4_50c = f4 [Just 50]
+testF4_50d = f4 [Just 50]
+testF4_50e = f4 [Just 50]
+
+testF4_47a = f4 [Just 47, Just 1, Just 2, Nothing, Just 4, Just 5] == (0, [Just 1, Just 2, Nothing])
+testF4_47b = f4 [Just 47]
+testF4_47c = f4 [Just 47]
+testF4_47d = f4 [Just 47]
+testF4_47e = f4 [Just 47]
+
+testF4_57a = f4 [Just 57, Just 2, Nothing, Just 4, Just 5] == (6, [Just 2, Nothing])
+testF4_57b = f4 [Just 57]
+testF4_57c = f4 [Just 57]
+testF4_57d = f4 [Just 57]
+testF4_57e = f4 [Just 57]
+
+testF4_76a = f4 [Just 76, Just 1, Just 2, Just 3, Just 4, Just 5, Just 6, Just 7] == (42, [Just 6, Just 7])
+testF4_76b = f4 [Just 76]
+testF4_76c = f4 [Just 76]
+testF4_76d = f4 [Just 76]
+testF4_76e = f4 [Just 76]
+
+testF4_edgea = f4 [] == (0, [])                            -- Edge case: Empty input list
+testF4_edgeb = f4 [Nothing, Nothing, Nothing] == (0, [])   -- Edge case: All Nothing values
+testF4_edgec = f4 [Just 73] == (1, [])                     -- Edge case: Opcode with no operands
+testF4_edged = f4[Just 30, Just 1, Just 2, Just 2]         -- Edge case: Invalid opcode
