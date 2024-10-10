@@ -73,41 +73,55 @@ f3 ns = foldl mul 1 [x | (x, i) <- zip ns [1..], i `mod` 316 == 0]
 -- Hint: A value of type `Maybe a` needs to be built using one of the two data constructors of the `Maybe` type.
 
 f4 :: [Maybe Int] -> (Int, [Maybe Int])
-f4 mis = functionFour mis 0  -- Initialize 'ans' to 0 for addition
+f4 mis = functionFour mis 0  -- Initialize 'ans' to 0
 
 functionFour :: [Maybe Int] -> Int -> (Int, [Maybe Int])
 functionFour [] ans = (ans, [])
 functionFour (Just opcode : operands) ans =
   case opcode of
-    60 -> fixed operands 3 ans add                    -- add fixed 3, terminate on Nothing
-    28 -> fixed operands 3 ans add                    -- add fixed 3, skip on Nothing
-    49 -> fixed operands 5 ans (addHandler 4)         -- add fixed 5, treat 4 as value
-    53 -> stopping operands 3 ans                     -- add  3, terminate on Nothing
-    66 -> stopping operands 4 ans                     -- add  4, skip on Nothing
-    18 -> stopping operands 6 ans (addHandler 8)      -- add  6, treat 8 as value
-    73 -> fixed operands 4 ans                        -- mul fixed 4, terminate on Nothing
-    44 -> fixed operands 3 ans                        -- mul fixed 3, skip on Nothing
-    50 -> fixed operands 3 ans (mulHandler 6)         -- mul fixed 3, treat 6 as value
-    47 -> stopping operands 4 ans                     -- mul  4, terminate on Nothing
-    57 -> stopping operands 4 ans                     -- mul  4, skip on Nothing
-    76 -> stopping operands 5 ans (mulHandler 7)      -- mul  5, treat 7 as value
+    60 -> fixed operands 3 ans True add                    -- add fixed 3, terminate on Nothing
+    28 -> fixed operands 3 ans True add                    -- add fixed 3, skip on Nothing
+    49 -> fixed operands 5 ans True(addHandler 4)         -- add fixed 5, treat 4 as value
+    53 -> stopping operands 3 ans True add                     -- add  3, terminate on Nothing
+    66 -> stopping operands 4 ans True add                    -- add  4, skip on Nothing
+    18 -> stopping operands 6 ans True (addHandler 8)      -- add  6, treat 8 as value
+    73 -> fixed operands 4 ans False mul                        -- mul fixed 4, terminate on Nothing
+    44 -> fixed operands 3 ans False mul                        -- mul fixed 3, skip on Nothing
+    50 -> fixed operands 3 ans False (mulHandler 6)         -- mul fixed 3, treat 6 as value
+    47 -> stopping operands 4 ans False mul                     -- mul  4, terminate on Nothing
+    57 -> stopping operands 4 ans False mul                     -- mul  4, skip on Nothing
+    76 -> stopping operands 5 ans False (mulHandler 7)      -- mul  5, treat 7 as value
     _  -> functionFour operands ans                   -- Skip any unrecognized opcode
 functionFour (Nothing : operands) ans = functionFour operands ans
 
-fixed :: [Maybe Int] -> Int -> Int -> (Int -> Int -> Int) -> (Int, [Maybe Int])
-fixed fixedOperands count ans operation
+fixed :: [Maybe Int] -> Int -> Int -> Bool -> (Int -> Int -> Int) -> (Int, [Maybe Int])
+fixed fixedOperands count ans isAdd operation
     | length fixedOperands >= count =
       let (current, remaining) = splitAt count fixedOperands
-          processed = foldl (\acc x -> maybe 0 id x) 1 current  
+
+          accumulator = if isAdd then 0 else 1
+          -- Adjust fold logic based on the operation (add or mul)
+          processed = foldl (\acc x -> 
+                              case x of 
+                                Nothing -> acc
+                                Just v  -> if isAdd then add acc v else mul acc v
+                            ) accumulator current
           newResult = operation ans processed
       in functionFour remaining newResult
     | otherwise = (ans, fixedOperands)
 
-stopping :: [Maybe Int] -> Int -> Int -> (Int -> Int -> Int) -> (Int, [Maybe Int])
-stopping stoppingOperands stoppingNumber ans operation
+stopping :: [Maybe Int] -> Int -> Int ->  Bool ->(Int -> Int -> Int) -> (Int, [Maybe Int])
+stopping stoppingOperands stoppingNumber ans isAdd operation
     | length stoppingOperands >= stoppingNumber =
       let (current, remaining) = splitAt stoppingNumber stoppingOperands
-          processed = foldl (\acc x -> maybe 0 id x) 1 current  
+
+          accumulator = if isAdd then 0 else 1
+          -- Adjust fold logic based on the operation (add or mul)
+          processed = foldl (\acc x -> 
+                              case x of 
+                                Nothing -> acc
+                                Just v  -> if isAdd then add acc v else mul acc v
+                            ) accumulator current
           newResult = operation ans processed
       in (newResult, remaining)
     | otherwise = (ans, stoppingOperands)    
@@ -152,7 +166,8 @@ testF3_2 = f3 [1..500] == 316                     -- Product of only the 316th e
 testF3_3 = f3 [1..900] == mul 316 632             -- Product of 316th and 632nd element
 
 -- *** Test cases for f4 function
-testF4_1 = f4 [Just 60, Just 3, Just 4, Just 5, Nothing] == (0, [Just 3, Just 4, Just 5])
+testF4_1 = f4 [Just 60, Just 3,  Just 4, Just 5] == (12, [])
+
 testF4_2 = f4 [Just 28, Just 4, Just 5, Nothing, Just 6] == (12, [Just 4, Just 5, Just 6])
 testF4_3 = f4 [Just 49, Just 4, Just 5, Just 6, Just 7, Just 8] == (18, [Just 4, Just 5, Just 6, Just 7, Just 8])
 testF4_4 = f4 [Just 53, Just 4, Just 5, Nothing, Just 6] == (12, [Just 4, Just 5, Nothing])
@@ -164,8 +179,6 @@ testF4_9 = f4 [Just 50, Just 6, Just 3, Just 4, Just 5] == (36, [Just 3, Just 4,
 testF4_10 = f4 [Just 47, Just 1, Just 2, Nothing, Just 4, Just 5] == (0, [Just 1, Just 2, Nothing])
 testF4_11 = f4 [Just 57, Just 2, Nothing, Just 4, Just 5] == (6, [Just 2, Nothing])
 testF4_12 = f4 [Just 76, Just 1, Just 2, Just 3, Just 4, Just 5, Just 6, Just 7] == (42, [Just 6, Just 7])
-
--- everything below this line is working
 testF4_13 = f4 [] == (0, [])                            -- Edge case: Empty input list
 testF4_14 = f4 [Nothing, Nothing, Nothing] == (0, [])   -- Edge case: All Nothing values
 testF4_15 = f4 [Just 73] == (1, [])                     -- Edge case: Opcode with no operands
