@@ -94,16 +94,16 @@ fixed fixedOperands count ans isAdd operation terminationFlag =
         newResult = if isAdd then add ans processed else processed  -- Just use 'processed' for 'mul'
     in (newResult, remaining)
 
--- Helper function to process operands, skipping Nothing
 processOperands :: [Maybe Int] -> Int -> Int -> Int -> (Int -> Int -> Int) -> Int -> (Int, [Maybe Int])
 processOperands [] acc processedCount totalNeeded _ _ = (acc, [])  -- No more operands to process
-processOperands (Nothing:xs) acc processedCount totalNeeded operation terminationFlag =
-    if terminationFlag == 1  -- Terminate if terminationFlag is 1
-       then (acc, xs)  -- Return accumulated result and remaining operands
-       else processOperands xs acc processedCount totalNeeded operation terminationFlag  -- Skip Nothing, continue processing
+processOperands (Nothing:xs) acc processedCount totalNeeded operation terminationFlag
+    | terminationFlag == 1 = (acc, xs)  -- Terminate processing when encountering Nothing
+    | terminationFlag == 0 = processOperands xs acc processedCount totalNeeded operation terminationFlag  -- Skip Nothing
+    | otherwise = processOperands xs (operation acc terminationFlag) (processedCount + 1) totalNeeded operation terminationFlag  -- Replace Nothing with terminationFlag value
 processOperands (Just v:xs) acc processedCount totalNeeded operation terminationFlag
-    | processedCount + 1 == totalNeeded = (operation acc v, xs)  -- Process final operand and return the rest
-    | otherwise = processOperands xs (operation acc v) (processedCount + 1) totalNeeded operation terminationFlag
+    | processedCount + 1 == totalNeeded = (operation acc v, xs)  -- Process the final operand and return the remaining list
+    | otherwise = processOperands xs (operation acc v) (processedCount + 1) totalNeeded operation terminationFlag  -- Continue processing
+
 
 -- Handling stopping operand operations
 stopping :: [Maybe Int] -> Int -> Int -> Bool -> (Int -> Int -> Int) -> Int -> (Int, [Maybe Int])
@@ -113,18 +113,15 @@ stopping stoppingOperands stopValue ans isAdd operation terminationFlag =
         (processed, remaining) = processStoppingOperands stoppingOperands accumulator stopValue operation terminationFlag
     in (processed, remaining)  -- Return the result and remaining operands
 
--- Helper function for stopping operations
 processStoppingOperands :: [Maybe Int] -> Int -> Int -> (Int -> Int -> Int) -> Int -> (Int, [Maybe Int])
 processStoppingOperands [] acc _ _ _ = (acc, [])  -- No more operands to process
-processStoppingOperands (Nothing:xs) acc stopValue operation terminationFlag =
-    if terminationFlag == 1  -- Terminate if terminationFlag is 1
-       then (acc, xs)  -- Return accumulated result and remaining operands
-       else processStoppingOperands xs acc stopValue operation terminationFlag  -- Skip Nothing, continue processing
+processStoppingOperands (Nothing:xs) acc stopValue operation terminationFlag
+    | terminationFlag == 1 = (acc, xs)  -- Terminate processing on Nothing
+    | terminationFlag == 0 = processStoppingOperands xs acc stopValue operation terminationFlag  -- Skip Nothing
+    | otherwise = processStoppingOperands xs (operation acc terminationFlag) stopValue operation terminationFlag  -- Replace Nothing with terminationFlag value
 processStoppingOperands (Just v:xs) acc stopValue operation terminationFlag
-    | v == stopValue = (operation acc v, xs)  -- Include the stopping value and return remaining operands
+    | v == stopValue = (operation acc v, xs)  -- Stop when the stopValue is encountered
     | otherwise = processStoppingOperands xs (operation acc v) stopValue operation terminationFlag  -- Continue processing
-
-
 
 -- *** Q5 (2 marks)
 -- uses `f4` to process all the opcodes in the maybe list,
@@ -210,3 +207,8 @@ testF4_edgea = f4 [] == (0, [])                            -- Edge case: Empty i
 testF4_edgeb = f4 [Nothing, Nothing, Nothing] == (0, [])   -- Edge case: All Nothing values
 testF4_edgec = f4 [Just 73] == (1, [])                     -- Edge case: Opcode with no operands
 testF4_edged = f4[Just 30, Just 1, Just 2, Just 2]         -- Edge case: Invalid opcode
+
+-- *** Test cases for f5 function
+testF5_1 = f5[Just 60, Just 1, Just 2, Just 3, Just 28,Just 1, Just 2, Just 3, Just 49,Just 1, Just 2, Just 3] == [6,6,6]
+testF5_2 = f5[Just 73, Just 2, Just 4, Just 6, Just 44, Just 1, Just 2, Just 3, Just 50, Just 1, Just 2, Just 2] == [48,6,4]
+testF5_3 = f5[Just 47, Just 3, Just 9, Just 12, Just 60, Just 1, Just 2, Just 3, Just 57,Just 2, Just 2, Just 3] == [324,6,12]
