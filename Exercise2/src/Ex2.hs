@@ -126,15 +126,16 @@ processStoppingOperands (Just v:xs) acc stopValue operation terminationFlag
 -- *** Q5 (2 marks)
 -- uses `f4` to process all the opcodes in the maybe list,
 -- by repeatedly applying it to the leftover part
--- Note: this will be tested against a correct version of `f4`,
---       rather than your submission.
 f5 :: [Maybe Int] -> [Int]
 f5 mis = functionFive mis []
+
 functionFive :: [Maybe Int] -> [Int] -> [Int]
-functionFive [] results = reverse results
+functionFive [] results = reverse results  -- Base case: return the results when the list is empty
 functionFive mis results =
     let (result, remaining) = f4 mis
-    in functionFive remaining (result : results)
+    in if result == 0 && null remaining
+        then reverse results  -- Do not add 0 if no more opcodes and remaining list is empty
+        else functionFive remaining (result : results)  -- Continue processing
 
 -- add extra material below here
 -- e.g.,  helper functions, test values, etc. ...
@@ -209,6 +210,23 @@ testF4_edgec = f4 [Just 73] == (1, [])                     -- Edge case: Opcode 
 testF4_edged = f4[Just 30, Just 1, Just 2, Just 2]         -- Edge case: Invalid opcode
 
 -- *** Test cases for f5 function
+-- No corrupted values
 testF5_1 = f5[Just 60, Just 1, Just 2, Just 3, Just 28,Just 1, Just 2, Just 3, Just 49,Just 1, Just 2, Just 3] == [6,6,6]
-testF5_2 = f5[Just 73, Just 2, Just 4, Just 6, Just 44, Just 1, Just 2, Just 3, Just 50, Just 1, Just 2, Just 2] == [48,6,4]
-testF5_3 = f5[Just 47, Just 3, Just 9, Just 12, Just 60, Just 1, Just 2, Just 3, Just 57,Just 2, Just 2, Just 3] == [324,6,12]
+testF5_2 = f5[Just 73, Just 2, Just 4, Just 6, Just 1, Just 44, Just 1, Just 2, Just 3, Just 50, Just 1, Just 2, Just 2] == [48,6,4]
+testF5_3 = f5[Just 47, Just 3, Just 9, Just 12, Just 4, Just 60, Just 1, Just 2, Just 3, Just 57,Just 2, Just 2, Just 3, Just 4] == [1296,6,48]
+
+-- Ignore anything after the fixed values
+testF5_4 =f5[Just 60, Just 1, Just 2, Just 3, Just 4, Just 28, Just 1, Just 2, Just 3, Just 5, Just 4, Just 49, Just 2]   == [6,6,2]
+
+-- Ignore anything after the stopping values
+testF5_5 = f5[Just 57, Just 1, Just 2, Just 4, Just 2, Just 18, Just 3, Just 6, Just 9, Just 53, Just 3, Just 2] == [8,9,3]
+
+-- Some corrupted values
+testF5_6 =f5[Just 60,Just 1, Nothing, Just 3, Just 28,Just 1, Just 2, Nothing, Just 3, Just 49,Just 1, Nothing, Just 2, Just 3] == [1,6,10]
+testF5_7 =f5[Just 73,Just 2, Just 4, Nothing, Just 1, Just 44, Just 1, Just 2, Nothing, Just 3, Just 50, Nothing, Just 2, Just 2] == [8,6,24]
+testF5_8 =f5[Just 47,Just 3, Just 9, Nothing, Just 4, Just 60, Just 1, Just 2, Nothing, Just 57,Just 2, Nothing, Just 2, Just 3, Just 4] == [27,3,48]
+
+testF5_edgea = f5 []                                       -- Edge case: Empty input list
+testF5_edgeb = f5 [Nothing, Nothing, Nothing]              -- Edge case: All Nothing values
+testF5_edgec = f5 [Just 73]                                -- Edge case: Opcode with no operands
+testF5_edged = f5[Just 30, Just 1, Just 2, Just 2]         -- Edge case: Invalid opcode
