@@ -87,21 +87,23 @@ functionFour (Nothing : operands) ans = functionFour operands ans  -- Skip Nothi
 
 -- Fixed operation handler (handling fixed N number of operands)
 fixed :: [Maybe Int] -> Int -> Int -> Bool -> (Int -> Int -> Int) -> Int -> (Int, [Maybe Int])
-fixed fixedOperands count ans isAdd operation replacement =
+fixed fixedOperands count ans isAdd operation terminationFlag =
     let accumulator = if isAdd then 0 else 1
-        -- Pass the 'operation' to the helper function
-        (processed, remaining) = processOperands fixedOperands accumulator 0 count operation
+        -- Pass the 'operation' and 'terminationFlag' to the helper function
+        (processed, remaining) = processOperands fixedOperands accumulator 0 count operation terminationFlag
         newResult = if isAdd then add ans processed else processed  -- Just use 'processed' for 'mul'
     in (newResult, remaining)
 
 -- Helper function to process operands, skipping Nothing
-processOperands :: [Maybe Int] -> Int -> Int -> Int -> (Int -> Int -> Int) -> (Int, [Maybe Int])
-processOperands [] acc processedCount totalNeeded _ = (acc, [])  -- No more operands to process
-processOperands (Nothing:xs) acc processedCount totalNeeded operation =
-    processOperands xs acc processedCount totalNeeded operation  -- Skip Nothing, don't increment processedCount
-processOperands (Just v:xs) acc processedCount totalNeeded operation
+processOperands :: [Maybe Int] -> Int -> Int -> Int -> (Int -> Int -> Int) -> Int -> (Int, [Maybe Int])
+processOperands [] acc processedCount totalNeeded _ _ = (acc, [])  -- No more operands to process
+processOperands (Nothing:xs) acc processedCount totalNeeded operation terminationFlag =
+    if terminationFlag == 1  -- Terminate if terminationFlag is 1
+       then (acc, xs)  -- Return accumulated result and remaining operands
+       else processOperands xs acc processedCount totalNeeded operation terminationFlag  -- Skip Nothing, continue processing
+processOperands (Just v:xs) acc processedCount totalNeeded operation terminationFlag
     | processedCount + 1 == totalNeeded = (operation acc v, xs)  -- Process final operand and return the rest
-    | otherwise = processOperands xs (operation acc v) (processedCount + 1) totalNeeded operation
+    | otherwise = processOperands xs (operation acc v) (processedCount + 1) totalNeeded operation terminationFlag
 
 -- Handling stopping operand operations
 stopping :: [Maybe Int] -> Int -> Int -> Bool -> (Int -> Int -> Int) -> Int -> (Int, [Maybe Int])
@@ -161,7 +163,7 @@ testF4_60a = f4 [Just 60, Just 3,  Just 4, Just 5] == (12, [])                  
 testF4_60b = f4 [Just 60, Just 3,  Just 4, Just 5, Just 6] == (12, [Just 6])    -- 3 + 4 + 5 + 6 = 12, [Just 6]
 testF4_60c = f4 [Just 60, Just 3,  Just 4] == (7, [])                           -- 3 + 4 = 7, []
 testF4_60d = f4 [Just 60, Just 3,  Just 4, Nothing] == (7, [])                                         -- 3 + 4 = 7, []
---testF4_60e = f4 [Just 60, Just 3,  Nothing, Just 4, Just 5] == (3, [Just 4, Just 5])                  
+testF4_60e = f4 [Just 60, Just 3,  Nothing, Just 4, Just 5] == (3, [Just 4, Just 5])                  
 
 -- ADD FIXED TERM 3 - NOTHINGS SKIPPED
 testF4_28a = f4 [Just 28, Just 3, Just 4, Nothing, Just 5]== (12, [])
@@ -188,8 +190,7 @@ testF4_66 = f4 [Just 66, Just 1, Just 2, Nothing, Just 3, Just 5, Just 4, Just 7
 -- MUL FIXED TERM 4 - NOTHINGS TERMINATED
 testF4_73a = f4 [Just 73, Just 1, Just 2, Just 3, Just 4, Just 5] == (24, [Just 5])
 testF4_73b = f4 [Just 73, Just 2, Just 3] == (6, [])
-testF4_73c = f4 [Just 73, Just 2, Just 3, Nothing] == (6, [])
-testF4_73d = f4 [Just 73, Just 2, Nothing] == (2, [])
+testF4_73c = f4 [Just 73, Just 2, Just 3, Nothing, Just 7] == (6, [Just 7])
 
 
 -- MUL FIXED TERM 4 - NOTHINGS SKIPPED
