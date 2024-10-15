@@ -170,8 +170,8 @@ testF4_28a = f4 [Just 28, Just 3, Just 4, Nothing, Just 5]== (12, [])
 testF4_28b = f4 [Just 28, Just 3, Nothing, Just 4, Just 5, Just 6] == (12, [Just 6])
 
 -- ADD FIXED TERM 5 - NOTHINGS REPLACED BY 4
---testF4_49a = f4 [Just 49, Nothing, Just 3, Just 4, Just 5, Just 6] == (22, [])
---testF4_49b = f4 [Just 49, Nothing, Nothing, Just 4, Just 5, Just 6] == (23, [])
+testF4_49a = f4 [Just 49, Nothing, Just 3, Just 4, Just 5, Just 6] == (22, [])
+testF4_49b = f4 [Just 49, Nothing, Nothing, Just 4, Just 5, Just 6] == (23, [])
 
 -- ADD STOP ON 3 - NOTHINGS TERMINATED
 testF4_53a = f4 [Just 53, Just 4, Just 5, Nothing, Just 6, Just 3, Just 2] == (9, [Just 6, Just 3, Just 2])
@@ -181,27 +181,20 @@ testF4_53b = f4 [Just 53, Just 4, Just 3, Just 8] == (7, [Just 8])
 testF4_66 = f4 [Just 66, Just 1, Just 2, Nothing, Just 3, Just 5, Just 4, Just 7] == (15, [Just 7])
 
 -- ADD STOP ON 6 - NOTHINGS REPLACED BY 8
---testF4_18a = f4 [Just 18, Just 1, Just 2, Just 3, Just 4, Just 5, Just 6, Just 7, Just 8] == (20, [Just 8])
---testF4_18b = f4 [Just 18]
---testF4_18c = f4 [Just 18]
---testF4_18d = f4 [Just 18]
---testF4_18e = f4 [Just 18]
+testF4_18a = f4 [Just 18, Just 1, Just 2, Just 3, Just 4, Just 5, Just 6, Just 7, Just 8] == (21, [Just 7, Just 8])
+testF4_18b = f4 [Just 18, Just 1, Just 2, Nothing, Just 6, Just 2] == (17,[Just 2])
 
 -- MUL FIXED TERM 4 - NOTHINGS TERMINATED
 testF4_73a = f4 [Just 73, Just 1, Just 2, Just 3, Just 4, Just 5] == (24, [Just 5])
 testF4_73b = f4 [Just 73, Just 2, Just 3] == (6, [])
 testF4_73c = f4 [Just 73, Just 2, Just 3, Nothing, Just 7] == (6, [Just 7])
 
-
 -- MUL FIXED TERM 4 - NOTHINGS SKIPPED
 testF4_44 = f4 [Just 44, Just 6, Just 7, Nothing, Just 3] == (126, [])
 
 -- MUL FIXED TERM 3 - NOTHINGS REPLACED BY 6
---testF4_50a = f4 [Just 50, Just 6, Just 3, Just 4, Just 5] == (36, [Just 3, Just 4, Just 5])
---testF4_50b = f4 [Just 50]
---testF4_50c = f4 [Just 50]
---testF4_50d = f4 [Just 50]
---testF4_50e = f4 [Just 50]
+testF4_50a = f4 [Just 50, Just 6, Just 3, Just 4, Just 5] == (72, [Just 5])
+testF4_50b = f4 [Just 50, Just 6, Nothing, Just 1, Just 2, Just 3] ==(36, [Just 2, Just 3])
 
 -- MUL STOP ON 3 - NOTHINGS TERMINATED
 testF4_47 = f4 [Just 47, Just 1, Just 2, Nothing, Just 4, Just 5, Just 2, Just 3] == (2, [Just 4, Just 5, Just 2, Just 3])
@@ -210,11 +203,8 @@ testF4_47 = f4 [Just 47, Just 1, Just 2, Nothing, Just 4, Just 5, Just 2, Just 3
 testF4_57 = f4 [Just 57, Just 2, Nothing, Just 4, Just 5] == (8, [Just 5])
 
 -- MUL STOP ON 5 - NOTHINGS REPLACED BY 7
---testF4_76a = f4 [Just 76, Just 1, Just 2, Just 3, Just 4, Just 5, Just 6, Just 7] == (42, [Just 6, Just 7])
---testF4_76b = f4 [Just 76]
---testF4_76c = f4 [Just 76]
---testF4_76d = f4 [Just 76]
---testF4_76e = f4 [Just 76]
+testF4_76a = f4 [Just 76, Just 1, Just 2, Just 3, Just 4, Just 5, Just 6, Just 7] == (120, [Just 6, Just 7])
+testF4_76b = f4 [Just 76, Just 4, Nothing, Just 2, Just 5, Just 1] == (280, [Just 1])
 
 testF4_edgea = f4 [] == (0, [])                            -- Edge case: Empty input list
 testF4_edgeb = f4 [Nothing, Nothing, Nothing] == (0, [])   -- Edge case: All Nothing values
