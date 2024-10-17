@@ -113,6 +113,7 @@ stopping stoppingOperands stopValue ans isAdd operation terminationFlag =
         (processed, remaining) = processStoppingOperands stoppingOperands accumulator stopValue operation terminationFlag
     in (processed, remaining)  -- Return the result and remaining operands
 
+-- Helper function to process the stopping operands
 processStoppingOperands :: [Maybe Int] -> Int -> Int -> (Int -> Int -> Int) -> Int -> (Int, [Maybe Int])
 processStoppingOperands [] acc _ _ _ = (acc, [])  -- No more operands to process
 processStoppingOperands (Nothing:xs) acc stopValue operation terminationFlag
@@ -120,8 +121,9 @@ processStoppingOperands (Nothing:xs) acc stopValue operation terminationFlag
     | terminationFlag == 0 = processStoppingOperands xs acc stopValue operation terminationFlag  -- Skip Nothing
     | otherwise = processStoppingOperands xs (operation acc terminationFlag) stopValue operation terminationFlag  -- Replace Nothing with terminationFlag value
 processStoppingOperands (Just v:xs) acc stopValue operation terminationFlag
-    | v == stopValue = (operation acc v, xs)  -- Stop when the stopValue is encountered
+    | v == stopValue = (acc, xs)  -- Stop processing when the stopValue is encountered without including it in the calculation
     | otherwise = processStoppingOperands xs (operation acc v) stopValue operation terminationFlag  -- Continue processing
+
 
 -- *** Q5 (2 marks)
 -- uses `f4` to process all the opcodes in the maybe list,
@@ -173,14 +175,14 @@ testF4_49b = f4 [Just 49, Nothing, Nothing, Just 4, Just 5, Just 6] == (23, [])
 
 -- ADD STOP ON 3 - NOTHINGS TERMINATED
 testF4_53a = f4 [Just 53, Just 4, Just 5, Nothing, Just 6, Just 3, Just 2] == (9, [Just 6, Just 3, Just 2])
-testF4_53b = f4 [Just 53, Just 4, Just 3, Just 8] == (7, [Just 8])
+testF4_53b = f4 [Just 53, Just 4, Just 3, Just 8] == (4, [Just 8])
 
 -- ADD STOP ON 4 - NOTHINGS SKIPPED
-testF4_66 = f4 [Just 66, Just 1, Just 2, Nothing, Just 3, Just 5, Just 4, Just 7] == (15, [Just 7])
+testF4_66 = f4 [Just 66, Just 1, Just 2, Nothing, Just 3, Just 5, Just 4, Just 7] == (11, [Just 7])
 
 -- ADD STOP ON 6 - NOTHINGS REPLACED BY 8
-testF4_18a = f4 [Just 18, Just 1, Just 2, Just 3, Just 4, Just 5, Just 6, Just 7, Just 8] == (21, [Just 7, Just 8])
-testF4_18b = f4 [Just 18, Just 1, Just 2, Nothing, Just 6, Just 2] == (17,[Just 2])
+testF4_18a = f4 [Just 18, Just 1, Just 2, Just 3, Just 4, Just 5, Just 6, Just 7, Just 8] == (15, [Just 7, Just 8])
+testF4_18b = f4 [Just 18, Just 1, Just 2, Nothing, Just 6, Just 2] == (11,[Just 2])
 
 -- MUL FIXED TERM 4 - NOTHINGS TERMINATED
 testF4_73a = f4 [Just 73, Just 1, Just 2, Just 3, Just 4, Just 5] == (24, [Just 5])
@@ -198,11 +200,11 @@ testF4_50b = f4 [Just 50, Just 6, Nothing, Just 1, Just 2, Just 3] ==(36, [Just 
 testF4_47 = f4 [Just 47, Just 1, Just 2, Nothing, Just 4, Just 5, Just 2, Just 3] == (2, [Just 4, Just 5, Just 2, Just 3])
 
 -- MUL STOP ON 4 - NOTHINGS SKIPPED
-testF4_57 = f4 [Just 57, Just 2, Nothing, Just 4, Just 5] == (8, [Just 5])
+testF4_57 = f4 [Just 57, Just 2, Nothing, Just 4, Just 5] == (2, [Just 5])
 
 -- MUL STOP ON 5 - NOTHINGS REPLACED BY 7
-testF4_76a = f4 [Just 76, Just 1, Just 2, Just 3, Just 4, Just 5, Just 6, Just 7] == (120, [Just 6, Just 7])
-testF4_76b = f4 [Just 76, Just 4, Nothing, Just 2, Just 5, Just 1] == (280, [Just 1])
+testF4_76a = f4 [Just 76, Just 1, Just 2, Just 3, Just 4, Just 5, Just 6, Just 7] == (24, [Just 6, Just 7])
+testF4_76b = f4 [Just 76, Just 4, Nothing, Just 2, Just 5, Just 1] == (56, [Just 1])
 
 testF4_edgea = f4 [] == (0, [])                            -- Edge case: Empty input list
 testF4_edgeb = f4 [Nothing, Nothing, Nothing] == (0, [])   -- Edge case: All Nothing values
