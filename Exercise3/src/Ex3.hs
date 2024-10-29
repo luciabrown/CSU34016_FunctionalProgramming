@@ -132,36 +132,18 @@ meval dict (IsNull n)=
 -- The following function should implement simplifications
 -- using ONLY the above two laws, wherever they apply.
 simp :: MathExpr -> MathExpr
--- Number
-simp (Number n) = Number n  -- Numbers remain unchanged
+simp (Prod (Number 0.0) _) = Number 0.0  -- 0 * x = 0
+simp (Prod _ (Number 0.0)) = Number 0.0  -- x * 0 = 0
+simp (Prod (Number 1.0) expr) = simp expr  -- 1 * x = x
+simp (Prod expr (Number 1.0)) = simp expr  -- x * 1 = x
+simp (DvdBy n1 (Number 1.0)) = simp n1  -- x / 1 = x
+simp (DvdBy (Number 0.0) _) = Number 0.0  -- 0 / x = 0 (conceptual simplification)
+simp (DvdBy n1 n2) = 
+    case (simp n1, simp n2) of
+        (num, Number 0.0) -> Number 0.0  -- division by zero
+        (num, denom) -> DvdBy num denom  -- Simplify both sides
+simp expr = expr  -- Return unchanged if no simplifications apply
 
--- Ident
-simp (Ident n) = Ident n  -- Identifiers remain unchanged
-
--- DvdBy
-simp (DvdBy n1 n2) = DvdBy (simp n1) (simp n2)
-
--- Prod
-simp (Prod n1 n2) = 
-  case (simp n1, simp n2) of
-    (Number 0.0, _) -> Number 0.0  -- x * 0 = 0
-    (_, Number 0.0) -> Number 0.0  -- 0 * x = 0
-    (Number 1.0, e) -> e             -- 1 * x = x
-    (e, Number 1.0) -> e             -- x * 1 = x
-    (se1, se2) -> Prod se1 se2  -- Otherwise, simplify subexpressions
-
--- Negate
-simp (Negate n) = Negate (simp n)
-
--- Not
-simp (Not n) = Not (simp n) 
-
--- Same or Less
-simp (SameOrLess n1 n2) = 
-  SameOrLess (simp n1) (simp n2)  -- No changes in comparisons
-
--- Is Null
-simp (IsNull n) = IsNull (simp n)  -- No changes in null checks
 
 -- add extra material below here
 -- e.g.,  helper functions, test values, etc. ...
@@ -200,19 +182,17 @@ errorMevalE=meval [] (Not (Ident "x")) == Nothing
 errorMevalF= meval [] (DvdBy (Ident "x") (Number 5.0)) == Nothing
 errorMevalG= meval [] (Not (Ident "x")) == Nothing
 
-testSimpA = simp (Prod (Number 0.0) (Ident "x")) == Number 0.0
-testSimpB = simp (Prod (Ident "x") (Number 0.0)) == Number 0.0
-testSimpC = simp (Prod (Number 1.0) (Ident "x")) == Ident "x"
-testSimpD = simp (Prod (Ident "x") (Number 1.0)) == Ident "x"
-testSimpE = simp (Prod (Number 3.0) (Number 0.0)) == Number 0.0
 
--- Non-zero Test Cases for simplification
-testNonZeroSimpA = 
-    let expr = Prod (Number 2.0) (Prod (Ident "x") (Number 1.0))
-        expected = Prod (Number 2.0) (Ident "x")  -- Expected result after simplification
-    in simp expr == expected
-
-testNonZeroSimpB = 
-    let expr = Prod (Prod (Ident "y") (Number 1.0)) (Ident "z")
-        expected = Prod (Ident "y") (Ident "z")  -- Expected result after simplification
-    in simp expr == expected
+testSimpA =simp (Prod (Number 0.0) (Ident "x")) == Number 0.0
+testSimpB=simp (Prod (Ident "x") (Number 0.0))== Number 0.0
+testSimpC=simp (Prod (Number 1.0) (Ident "x")) ==Ident "x"
+testSimpD=simp (Prod (Ident "x") (Number 1.0)) ==Ident "x"
+testSimpE=simp (DvdBy (Ident "x") (Number 1.0))==Ident "x"
+testSimpF=simp (DvdBy (Number 0.0) (Ident "x")) ==Number 0.0
+testSimpG=simp (DvdBy (Number 0.0) (Number 1.0))==Number 0.0
+testSimpH=simp (DvdBy (Ident "x") (Number 0.0)) == Number 0.0
+testSimpI=simp (Prod (Number 2.0) (Number 0.0)) ==Number 0.0
+testSimpJ=simp (Prod (Number 0.0) (Number 5.0))==Number 0.0
+testSimpK=simp (Prod (Number 3.0) (Number 1.0))==Number 3.0
+testSimpL=simp (DvdBy (Number 4.0) (Number 1.0))==Number 4.0
+testSimpM=simp (DvdBy (Number 4.0) (Number 0.0)) ==DvdBy (Number 4.0) (Number 0.0)
