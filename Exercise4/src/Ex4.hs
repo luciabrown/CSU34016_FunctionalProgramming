@@ -157,4 +157,3 @@ testCatA = dofold catTuple (testThings1 : testThings2) ==
            [(1.0, [1]), (2.0, [2]), (3.0, [3]), (4.0, [4])] -- Concatenation works as expected
 
 testCatB = dofold catTuple [] == [] -- Concatenation of empty list is empty
-
