@@ -123,28 +123,38 @@ ops = [(+34),(*29),(33-),(sub 28),(*34),(+34),(+33),(30-),(*29),(*32),(*26)]
 
 -- add extra material below here
 -- e.g.,  helper functions, test values, etc. ...
--- Helper function to print results for each test
--- Define the function printTestResult to compare and print the results
---test1 = "test1" ~: mdeval [] (Number 5) ~?= Right 5.0
---test2 = "test2" ~: mdeval [("x", 10), ("y", 20)] (Ident "x") ~?= Right 10.0
---test3 = "test3" ~: mdeval [("x", 10), ("y", 20)] (Ident "z") ~?= Left "Identifier not found: z"
---test4 = "test4" ~: mdeval [("x", 10), ("y", 5)] (DvdBy (Ident "x") (Ident "y")) ~?= Right 2.0
---test5 = "test5" ~: mdeval [("x", 10), ("y", 0)] (DvdBy (Ident "x") (Ident "y")) ~?= Left "Division by zero"
---test6 = "test6" ~: mdeval [("x", 3), ("y", 4)] (Prod (Ident "x") (Ident "y")) ~?= Right 12.0
---test7 = "test7" ~: mdeval [("x", 5)] (Negate (Ident "x")) ~?= Right (-5.0)
---test8 = "test8" ~: mdeval [("x", 0)] (Not (Ident "x")) ~?= Right 1.0
---test9 = "test9" ~: mdeval [("x", 10)] (Not (Ident "x")) ~?= Right 0.0
---test10 = "test10" ~: mdeval [("x", 5), ("y", 10)] (SameOrLess (Ident "x") (Ident "y")) ~?= Right 1.0
---test11 = "test11" ~: mdeval [("x", 15), ("y", 10)] (SameOrLess (Ident "x") (Ident "y")) ~?= Right 0.0
---test12 = "test12" ~: mdeval [("x", 0)] (IsNull (Ident "x")) ~?= Right 1.0
---test13 = "test13" ~: mdeval [("x", 10)] (IsNull (Ident "x")) ~?= Right 0.0
---test14 = "test14" ~: mdeval [("x", 20), ("y", 5)] (DvdBy (Prod (Ident "x") (Ident "y")) (Ident "y")) ~?= Right 4.0
---test15 = "test15" ~: mdeval [("x", 5)] (Negate (Prod (Ident "x") (Ident "x"))) ~?= Right (-25.0)
---test16 = "test16" ~: mdeval [] (Ident "undefined_var") ~?= Left "Identifier not found: undefined_var"
---test17 = "test17" ~: mdeval [("a", 1), ("b", 0)] (DvdBy (Ident "a") (Ident "b")) ~?= Left "Division by zero"
 
--- Run all tests
---tests = TestList [test1, test2, test3, test4, test5, test6, test7, test8, test9, test10, test11, test12, test13, test14, test15, test16, test17]
+-- Tests for Q1:
+testMdevalA = mdeval [] (Number 5.0) == Just 5.0
+testMdevalB = mdeval [] (Prod (Number 3.0) (Number 4.0)) == Just 12.0
+testMdevalC = mdeval [] (DvdBy (Number 10.0) (Number 5.0)) == Just 2.0
+testMdevalD = mdeval [] (Negate (Number 7.0)) == Just (-7.0)
+testMdevalE = mdeval [("x", 10.0)] (Ident "x") == Just 10.0
+testMdevalF = mdeval [] (Not (Number 0.0)) == Just 1.0
+testMdevalG = mdeval [] (Not (Number 5.0)) == Just 0.0
+testMdevalH = mdeval [] (SameOrLess (Number 3.0) (Number 5.0)) == Just 1.0
+testMdevalI = mdeval [] (SameOrLess (Number 6.0) (Number 5.0)) == Just 0.0
+testMdevalJ = mdeval [] (IsNull (Number 0.0)) == Just 1.0
+testMdevalK = mdeval [] (IsNull (Number 5.0)) == Just 0.0
+testMdevalL = mdeval [] (DvdBy (Number 10.0) (Number 0.0)) == Nothing -- Division by zero
+testMdevalM = mdeval [] (Ident "y") == Nothing -- Undefined variable
 
---main :: IO Counts
---main = runTestTT tests
+-- Test cases for Q2:
+testLenA = dofold lenTuple [1, 2, 3, 4] == 4 -- Length of the list [1,2,3,4] is 4
+testLenB = dofold lenTuple [] == 0 -- Empty list has length 0
+
+testSumupA = dofold sumupTuple [1, 2, 3, 4] == 10 -- Sum of [1,2,3,4] is 10
+testSumupB = dofold sumupTuple [] == 0 -- Sum of an empty list is 0
+
+testProdA = dofold prodTuple [1, 2, 3, 4] == 24 -- Product of [1,2,3,4] is 24
+testProdB = dofold prodTuple [] == 1 -- Product of an empty list is 1 (identity)
+
+-- Sample Things for testing `cat`
+testThings1 = [(1.0, [1]), (2.0, [2])]
+testThings2 = [[(3.0, [3])], [(4.0, [4])]]
+
+testCatA = dofold catTuple (testThings1 : testThings2) ==
+           [(1.0, [1]), (2.0, [2]), (3.0, [3]), (4.0, [4])] -- Concatenation works as expected
+
+testCatB = dofold catTuple [] == [] -- Concatenation of empty list is empty
+
