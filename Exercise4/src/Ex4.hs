@@ -99,8 +99,8 @@ dofold (z,op) = foldL z op
 -- so that `dofold` can be used to implement the fns. above.
 
 -- dofold lenTuple = len
-lenTuple :: (Int,Int -> Int -> Int)
-lenTuple = (0, \x y -> y + 1) 
+lenTuple :: (Int, Int -> Int -> Int)
+lenTuple = (0, \x _ -> x + 1)
 
 -- dofold sumupTuple = sumup
 sumupTuple :: (Int,Int -> Int -> Int)
@@ -140,14 +140,25 @@ testMdevalL = mdeval [] (DvdBy (Number 10.0) (Number 0.0)) == Nothing -- Divisio
 testMdevalM = mdeval [] (Ident "y") == Nothing -- Undefined variable
 
 -- Test cases for Q2:
-testLenA = dofold lenTuple [1, 2, 3, 4] == 4 -- Length of the list [1,2,3,4] is 4
-testLenB = dofold lenTuple [] == 0 -- Empty list has length 0
+testLenA = dofold lenTuple [1, 2, 3, 4] == 4
+testLenB = dofold lenTuple [] == 0
+testLenC = dofold lenTuple [42] == 1
+testLenD = dofold lenTuple [10, 20, 30, 40, 50] == 5
+testLenE = dofold lenTuple [-1, -2, -3] == 3
 
-testSumupA = dofold sumupTuple [1, 2, 3, 4] == 10 -- Sum of [1,2,3,4] is 10
-testSumupB = dofold sumupTuple [] == 0 -- Sum of an empty list is 0
+testSumupA = dofold sumupTuple [1, 2, 3, 4] == 10
+testSumupB = dofold sumupTuple [] == 0
+testSumupC = dofold sumupTuple [5, 10, 15] == 30
+testSumupD = dofold sumupTuple [-1, -2, -3] == -6
+testSumupE = dofold sumupTuple [0, 0, 0] == 0
+testSumupF = dofold sumupTuple [42] == 42
 
-testProdA = dofold prodTuple [1, 2, 3, 4] == 24 -- Product of [1,2,3,4] is 24
-testProdB = dofold prodTuple [] == 1 -- Product of an empty list is 1 (identity)
+testProdA = dofold prodTuple [1, 2, 3, 4] == 24
+testProdB = dofold prodTuple [] == 1
+testProdC = dofold prodTuple [5, 6, 7] == 210
+testProdD = dofold prodTuple [10] == 10
+testProdE = dofold prodTuple [0, 2, 3] == 0
+testProdF = dofold prodTuple [-1, 2, -3] == 6
 
 -- Sample Things for testing `cat`
 testThings1 = [(1.0, [1]), (2.0, [2])]
