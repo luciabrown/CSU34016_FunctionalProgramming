@@ -8,13 +8,97 @@ IMPORT-HASKELL Ex5
 
 THEOREM ex5q4
 
-   casef (x+1) > casef x
+   casef (x + 1) > casef x
 
-STRATEGY ReduceAll
+STRATEGY CaseSplit Plus1Order
 
-  2+2 == 5
+  CASE 1 (x < 3)
+    SHOW
+      casef (x + 1) > casef x
 
-END ReduceAll
+    STRATEGY ReduceAll
+
+      casef (x + 1) > casef x
+      = DEF casef
+        (if (x + 1) < 4 then 2 * (x + 1) else 2 * (x + 1) - 1) > casef x
+      = SIMP
+        2 * (x + 1) > (if x < 4 then 2 * x else 2 * x - 1)
+      = CASEP Plus1Order 1
+        2 * (x + 1) > 2 * x
+      = LAW mul_add_left_distr
+        2 * x + 2 > 2 * x
+      = LAW nat_add_order
+        True
+    END ReduceAll
+  END CASE 1
+
+  CASE 2 (x == 3)
+    SHOW
+      casef (x + 1) > casef x
+
+    STRATEGY ReduceAll
+
+      casef (x + 1) > casef x
+      = DEF casef
+        (if (x + 1) < 4 then 2 * (x + 1) else 2 * (x + 1) - 1) > casef x
+      = SIMP
+        2 * (x + 1) - 1 > (if x < 4 then 2 * x else 2 * x - 1)
+      = CASEP Plus1Order 2
+        2 * (x + 1) - 1 > 2 * x
+      = SIMP
+        2 * x + 2 - 1 > 2 * x
+      = SIMP
+        2 * x + 1 > 2 * x
+      = LAW gt_plus_1
+        True
+    END ReduceAll
+  END CASE 2
+
+  CASE 3 (x == 4)
+    SHOW
+      casef (x + 1) > casef x
+
+    STRATEGY ReduceAll
+
+      casef (x + 1) > casef x
+      = DEF casef
+        (if (x + 1) < 4 then 2 * (x + 1) else 2 * (x + 1) - 1) > casef x
+      = SIMP
+        2 * (x + 1) - 1 > (if x < 4 then 2 * x else 2 * x - 1)
+      = CASEP Plus1Order 3
+        2 * (x + 1) - 1 > 2 * x - 1
+      = SIMP
+        2 * x + 2 - 1 > 2 * x - 1
+      = SIMP
+        2 * x + 1 > 2 * x - 1
+      = LAW gt_plus_1
+        True
+    END ReduceAll
+  END CASE 3
+
+  CASE 4 (x > 4)
+    SHOW
+      casef (x + 1) > casef x
+
+    STRATEGY ReduceAll
+
+      casef (x + 1) > casef x
+      = DEF casef
+        (if (x + 1) < 4 then 2 * (x + 1) else 2 * (x + 1) - 1) > casef x
+      = SIMP
+        2 * (x + 1) - 1 > (if x < 4 then 2 * x else 2 * x - 1)
+      = CASEP Plus1Order 4
+        2 * (x + 1) - 1 > 2 * x - 1
+      = SIMP
+        2 * x + 2 - 1 > 2 * x - 1
+      = SIMP
+        2 * x + 1 > 2 * x - 1
+      = LAW gt_plus_1
+        True
+    END ReduceAll
+  END CASE 4
+
+END CaseSplit
 
 QED ex5q4
 

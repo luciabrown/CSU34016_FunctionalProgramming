@@ -10,11 +10,30 @@ THEOREM ex5q2
 
    frec 100 == 8000
 
-STRATEGY ReduceAll
+STRATEGY ReduceLHS
 
-  2+2 == 5
+  frec 100
+  = DEF frec
+    if 100 <= 4 then 4 else 100 * frec (100 `div` 5) 
+  = SIMP
+    if False then 4 else 100 * frec 20               
+  = IF 2
+    100 * frec 20                               
+  = DEF frec
+    100 * (if 20 <= 4 then 4 else 20 * frec (20 `div` 5)) 
+  = SIMP
+    100 * (if False then 4 else 20 * frec 4)         
+  = IF 2
+    100 * (20 * frec 4)                              
+  = DEF frec
+    100 * (20 * (if 4 <= 4 then 4 else 4 * frec (4 `div` 5))) 
+  = SIMP
+    100 * (20 * (if True then 4 else 4 * frec (4 `div` 5)))    
+  = IF 1
+    100 * (20 * 4)                                 
+  = SIMP
+    8000                                             
 
-END ReduceAll
+END ReduceLHS
 
 QED ex5q2
-
