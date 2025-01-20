@@ -10,7 +10,7 @@ THEOREM ex5q3
 
    bonus xs == 12 + 5 * (len xs) + sum xs
 
-STRATEGY Induction xs :: list
+STRATEGY Induction xs :: List
 
   BASE []
   
@@ -65,4 +65,5 @@ STRATEGY Induction xs :: list
     END ReduceBoth
   END STEP
 END Induction
+
 QED ex5q3
