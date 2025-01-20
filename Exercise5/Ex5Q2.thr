@@ -30,10 +30,9 @@ STRATEGY ReduceLHS
   = SIMP
     100 * (20 * (if True then 4 else 4 * frec (4 `div` 5)))    
   = IF 1
-    100 * (20 * 4)                                 
+    100 * (20 * 4)                                                      
   = SIMP
-    8000                                             
+    8000                                           
 
 END ReduceLHS
-
 QED ex5q2
