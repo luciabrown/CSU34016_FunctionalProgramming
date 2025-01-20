@@ -20,7 +20,6 @@ THEOREM ex5q1
       (x - (y - z)) * 1
     = LAW mul_right_unit l2r @ *
       x - (y - z)
-
     RHS
       (((z + x) - y) - 0) - (1 * 0)
     = SIMP
